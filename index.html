@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Timetable & Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+        }
+
+        .countdown {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+        }
+
+        .countdown-timer {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            border-bottom: 2px solid #f093fb;
+            padding-bottom: 10px;
+        }
+
+        .today-tasks {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .today-tasks h2 {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+            background: #e8f5e9;
+        }
+
+        .task-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .time-slot {
+            font-weight: bold;
+            color: #764ba2;
+            margin-right: 10px;
+        }
+
+        .timetable-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .timetable {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+        }
+
+        .timetable th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: clamp(0.8rem, 1.5vw, 1rem);
+        }
+
+        .timetable td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: clamp(0.75rem, 1.3vw, 0.9rem);
+        }
+
+        .timetable tr:hover {
+            background: #f5f5f5;
+        }
+
+        .timetable tr.today-row {
+            background: #fff3e0;
+            font-weight: bold;
+        }
+
+        .todo-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .todo-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 2px solid #764ba2;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+            background: #e8f5e9;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .reminder-section {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .reminder-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+        }
+
+        .send-reminder-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .work-summary {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .summary-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        @media (max-width: 600px) {
+            .timetable {
+                font-size: 12px;
+            }
+            
+            .timetable th, .timetable td {
+                padding: 8px 5px;
+            }
+            
+            .container {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Study Timetable & Task Manager</h1>
+            <div class="countdown">
+                <div>Countdown to November 10:</div>
+                <div class="countdown-timer" id="countdown"></div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="card today-tasks">
+                <h2>📅 Today's Tasks</h2>
+                <div id="todayTasks"></div>
+            </div>
+
+            <div class="card">
+                <h2>✅ To-Do List</h2>
+                <div class="todo-section">
+                    <input type="text" class="todo-input" id="todoInput" placeholder="Add a new task...">
+                    <button class="add-btn" onclick="addTodo()">Add Task</button>
+                </div>
+                <div id="todoList"></div>
+            </div>
+
+            <div class="card">
+                <h2>🔔 Reminders & Work Summary</h2>
+                <div class="reminder-section">
+                    <h3 style="color: #4CAF50; margin-bottom: 10px;">Set Reminder</h3>
+                    <input type="text" class="reminder-input" id="reminderText" placeholder="Enter reminder message...">
+                    <input type="datetime-local" class="reminder-input" id="reminderTime">
+                    <button class="send-reminder-btn" onclick="sendReminder()">Send Email Reminder</button>
+                </div>
+                
+                <div class="work-summary">
+                    <h3 style="color: #4CAF50; margin-bottom: 10px;">Work Summary</h3>
+                    <div id="workSummary">
+                        <div class="summary-item">📊 Completed Tasks: <span id="completedCount">0</span></div>
+                        <div class="summary-item">⏳ Pending Tasks: <span id="pendingCount">0</span></div>
+                        <div class="summary-item">🎯 Today's Progress: <span id="progressPercent">0%</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timetable-container">
+            <h2 style="color: #764ba2; margin-bottom: 20px;">📋 Full Study Timetable</h2>
+            <table class="timetable">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Morning (8-11am)</th>
+                        <th>Midday (12:30-3pm)</th>
+                        <th>Evening (4-7pm)</th>
+                        <th>Night (8-9:30pm)</th>
+                    </tr>
+                </thead>
+                <tbody id="timetableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Timetable Data
+        const timetableData = [
+            {
+                day: "Day 1",
+                morning: "SFT – Core concepts, Diagrams",
+                midday: "ET – Electronics theory",
+                evening: "ICT – Networking basics",
+                night: "SFT formulas + definitions"
+            },
+            {
+                day: "Day 2",
+                morning: "ET – Mechanics & Structures",
+                midday: "ICT – Programming fundamentals",
+                evening: "SFT – Past Paper (Structured + Essay)",
+                night: "ICT – Short notes"
+            },
+            {
+                day: "Day 3",
+                morning: "SFT – Practical Applications",
+                midday: "ET – Past Paper (short + essay)",
+                evening: "ICT – Database + SQL",
+                night: "SFT key points recap"
+            },
+            {
+                day: "Day 4",
+                morning: "ET – Electronics + Circuits",
+                midday: "ICT – Past Paper full (timed)",
+                evening: "SFT – Essay + Short questions",
+                night: "ET – Definitions/formulas"
+            },
+            {
+                day: "Day 5",
+                morning: "SFT – Past Paper (full timed)",
+                midday: "ET – System Applications",
+                evening: "ICT – MCQs + Theory recap",
+                night: "Mixed Short Notes (SFT + ICT)"
+            },
+            {
+                day: "Day 6",
+                morning: "ET – Full Past Paper (simulate exam)",
+                midday: "SFT – Weak areas revision",
+                evening: "ICT – Essay + Structured Qs",
+                night: "SFT + ICT diagrams + flowcharts"
+            },
+            {
+                day: "Day 7",
+                morning: "All 3 – Short notes, Diagrams, Formulas",
+                midday: "Mixed MCQs (light practice)",
+                evening: "Relax / Pack exam essentials",
+                night: "Early sleep 😴"
+            }
+        ];
+
+        // Initialize data
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        let todayTasksCompleted = JSON.parse(localStorage.getItem('todayTasksCompleted')) || {};
+        let currentDay = parseInt(localStorage.getItem('currentDay')) || 1;
+
+        // Countdown Timer
+        function updateCountdown() {
+            const targetDate = new Date('2024-11-10T00:00:00');
+            const now = new Date();
+            const difference = targetDate - now;
+
+            if (difference > 0) {
+                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+                document.getElementById('countdown').innerHTML = 
+                    `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            } else {
+                document.getElementById('countdown').innerHTML = "Time's up! Good luck! 🎉";
+            }
+        }
+
+        // Load timetable
+        function loadTimetable() {
+            const tbody = document.getElementById('timetableBody');
+            tbody.innerHTML = '';
+            
+            timetableData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                if (index + 1 === currentDay) {
+                    tr.classList.add('today-row');
+                }
+                
+                tr.innerHTML = `
+                    <td><strong>${row.day}</strong></td>
+                    <td>${row.morning}</td>
+                    <td>${row.midday}</td>
+                    <td>${row.evening}</td>
+                    <td>${row.night}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Load today's tasks
+        function loadTodayTasks() {
+            const todayData = timetableData[currentDay - 1];
+            if (!todayData) return;
+
+            const tasksDiv = document.getElementById('todayTasks');
+            const tasks = [
+                { time: '8-11am', task: todayData.morning },
+                { time: '12:30-3pm', task: todayData.midday },
+                { time: '4-7pm', task: todayData.evening },
+                { time: '8-9:30pm', task: todayData.night }
+            ];
+
+            tasksDiv.innerHTML = '';
+            tasks.forEach((item, index) => {
+                const taskKey = `day${currentDay}_task${index}`;
+                const isCompleted = todayTasksCompleted[taskKey] || false;
+                
+                const taskDiv = document.createElement('div');
+                taskDiv.className = `task-item ${isCompleted ? 'completed' : ''}`;
+                taskDiv.innerHTML = `
+                    <div>
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} 
+                               onchange="toggleTodayTask('${taskKey}', this.checked)">
+                        <span class="time-slot">${item.time}</span>
+                        <span>${item.task}</span>
+                    </div>
+                `;
+                tasksDiv.appendChild(taskDiv);
+            });
+            
+            updateWorkSummary();
+        }
+
+        // Toggle today's task completion
+        function toggleTodayTask(taskKey, isChecked) {
+            todayTasksCompleted[taskKey] = isChecked;
+            localStorage.setItem('todayTasksCompleted', JSON.stringify(todayTasksCompleted));
+            loadTodayTasks();
+        }
+
+        // Todo List Functions
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const text = input.value.trim();
+            
+            if (text) {
+                todos.push({
+                    id: Date.now(),
+                    text: text,
+                    completed: false
+                });
+                saveTodos();
+                loadTodos();
+                input.value = '';
+            }
+        }
+
+        function loadTodos() {
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+            
+            todos.forEach(todo => {
+                const todoDiv = document.createElement('div');
+                todoDiv.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                todoDiv.innerHTML = `
+                    <div>
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                               onchange="toggleTodo(${todo.id})">
+                        <span>${todo.text}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+                `;
+                todoList.appendChild(todoDiv);
+            });
+            
+            updateWorkSummary();
+        }
+
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                saveTodos();
+                loadTodos();
+            }
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            saveTodos();
+            loadTodos();
+        }
+
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        // Update work summary
+        function updateWorkSummary() {
+            const todayTasksCount = Object.keys(todayTasksCompleted).filter(key => 
+                key.startsWith(`day${currentDay}_`)).length;
+            const todayTasksCompletedCount = Object.keys(todayTasksCompleted).filter(key => 
+                key.startsWith(`day${currentDay}_`) && todayTasksCompleted[key]).length;
+            
+            const todoCompleted = todos.filter(t => t.completed).length;
+            const todoPending = todos.filter(t => !t.completed).length;
+            
+            const totalCompleted = todayTasksCompletedCount + todoCompleted;
+            const totalTasks = todayTasksCount + todos.length;
+            const progress = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
+            
+            document.getElementById('completedCount').textContent = totalCompleted;
+            document.getElementById('pendingCount').textContent = todoPending + (todayTasksCount - todayTasksCompletedCount);
+            document.getElementById('progressPercent').textContent = progress + '%';
+        }
+
+        // Send reminder (simulated)
+        function sendReminder() {
+            const reminderText = document.getElementById('reminderText').value;
+            const reminderTime = document.getElementById('reminderTime').value;
+            
+            if (reminderText && reminderTime) {
+                // In a real application, this would send an actual email
+                // For now, we'll simulate it with an alert and console log
+                const emailData = {
+                    to: 'sithijasamod93@gmail.com',
+                    subject: 'Study Reminder',
+                    body: `Reminder: ${reminderText}\nScheduled for: ${new Date(reminderTime).toLocaleString()}`,
+                    tasks: todos,
+                    todaysTasks: timetableData[currentDay - 1]
+                };
+                
+                console.log('Email would be sent to:', emailData);
+                alert(`Reminder set! An email will be sent to sithijasamod93@gmail.com\n\nReminder: ${reminderText}\nTime: ${new Date(reminderTime).toLocaleString()}`);
+                
+                // Clear inputs
+                document.getElementById('reminderText').value = '';
+                document.getElementById('reminderTime').value = '';
+            } else {
+                alert('Please enter both reminder text and time.');
+            }
+        }
+
+        // Set current day selector
+        function initDaySelector() {
+            const header = document.querySelector('.header h1');
+            const daySelector = document.createElement('select');
+            daySelector.style.marginLeft = '20px';
+            daySelector.style.padding = '5px';
+            daySelector.style.borderRadius = '5px';
+            daySelector.style.border = '2px solid #764ba2';
+            
+            for (let i = 1; i <= 7; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.text = `Day ${i}`;
+                option.selected = i === currentDay;
+                daySelector.appendChild(option);
+            }
+            
+            daySelector.onchange = function() {
+                currentDay = parseInt(this.value);
+                localStorage.setItem('currentDay', currentDay);
+                loadTimetable();
+                loadTodayTasks();
+            };
+            
+            header.appendChild(daySelector);
+        }
+
+        // Initialize everything on load
+        window.onload = function() {
+            initDaySelector();
+            loadTimetable();
+            loadTodayTasks();
+            loadTodos();
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+            
+            // Allow Enter key to add todo
+            document.getElementById('todoInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTodo();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
